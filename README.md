@@ -61,6 +61,5 @@ npm run once           # practice mode: logs what it WOULD write
 Set `DRY_RUN=false` after reviewing a practice cycle. Deploy as an
 always-on worker (`npm start`) on any modern host.
 
-Built on the [Sento courier framework](https://github.com/veism123/sento-courier).
-More integrations: Google Analytics and Search Console, HubSpot, and
-others — one small repo each, same fifteen-minute setup.
+More integrations coming: Google Analytics and Search Console, HubSpot,
+and others — one small repo each, same fifteen-minute setup.
