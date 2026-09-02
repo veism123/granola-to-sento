@@ -43,9 +43,15 @@ export function composeEntry(note: GranolaNote, rules: FilterRules): EntryItem {
 export const granolaSource: Source = {
   async fetch(feed: FeedConfig, apiKey: string): Promise<SourceItem[]> {
     const opts = (feed.options ?? {}) as GranolaOptions;
+    // Env vars override feeds.json, so a deployment can carry its own
+    // domains without committing them to the repo.
+    const envCsv = (name: string): string[] | null => {
+      const v = process.env[name];
+      return v ? v.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean) : null;
+    };
     const rules: FilterRules = {
-      internalDomains: (opts.internalDomains ?? []).map((d) => d.toLowerCase()),
-      internalEmails: (opts.internalEmails ?? []).map((e) => e.toLowerCase()),
+      internalDomains: envCsv("INTERNAL_DOMAINS") ?? (opts.internalDomains ?? []).map((d) => d.toLowerCase()),
+      internalEmails: envCsv("INTERNAL_EMAILS") ?? (opts.internalEmails ?? []).map((e) => e.toLowerCase()),
     };
     const lookbackHours = opts.lookbackHours ?? 48;
     const since = new Date(Date.now() - lookbackHours * 3600_000);
