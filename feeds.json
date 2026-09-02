@@ -1,0 +1,13 @@
+[
+  {
+    "name": "granola-transcripts",
+    "source": "granola",
+    "targetEntity": "Customer meeting transcripts",
+    "apiKeyEnv": "GRANOLA_API_KEY",
+    "options": {
+      "internalDomains": ["yourcompany.com"],
+      "internalEmails": [],
+      "lookbackHours": 48
+    }
+  }
+]
