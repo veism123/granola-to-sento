@@ -11,6 +11,10 @@ export interface FeedConfig {
   // Which cron schedule runs this feed (default "hourly"). Local runs
   // (npm run once / dev) always run every feed.
   schedule?: "hourly" | "daily";
+  // Slack ping when this feed produces. Defaults: entry feeds ping with the
+  // new entries' names; observation (metric) feeds stay silent, because a
+  // routine number is not news. Set explicitly to override either way.
+  notify?: boolean;
   options?: Record<string, unknown>;
 }
 

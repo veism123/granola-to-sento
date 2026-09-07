@@ -28,6 +28,8 @@ export async function runFeed(
   sources: Record<string, Source>
 ): Promise<void> {
   let written = 0;
+  const writtenNames: string[] = [];
+  let wroteObservations = false;
   const source = sources[feed.source];
   if (!source) {
     throw new Error(`[${feed.name}] unknown source "${feed.source}" (known: ${Object.keys(sources).join(", ")})`);
@@ -78,6 +80,7 @@ export async function runFeed(
       });
       writesSinceBeat++;
       written++;
+      wroteObservations = true;
       log(`[${feed.name}] wrote observation ${item.sourceId}`, { server: result.slice(0, 200) });
       continue;
     }
@@ -104,16 +107,34 @@ export async function runFeed(
     });
     writesSinceBeat++;
     written++;
+    writtenNames.push(item.name);
     log(`[${feed.name}] wrote entry ${item.sourceId}`, { server: result.slice(0, 200) });
   }
-  await pingIfProductive(feed, written, dryRun);
+  await pingIfProductive(feed, written, writtenNames, wroteObservations, dryRun);
 }
 
-// One ping per cycle per feed that produced something, never for quiet
-// cycles: "granola-transcripts: 2 new in Customer meeting transcripts".
-async function pingIfProductive(feed: FeedConfig, written: number, dryRun: boolean): Promise<void> {
+// A ping must say what arrived, or not fire at all. Entry feeds ping with
+// the new entries' names (up to three, then a count); metric feeds stay
+// silent by default, because "1 new observation" is not news and the weekly
+// report speaks for the numbers. feed.notify overrides in either direction.
+async function pingIfProductive(
+  feed: FeedConfig,
+  written: number,
+  names: string[],
+  observationsOnly: boolean,
+  dryRun: boolean
+): Promise<void> {
   if (dryRun || written === 0) return;
-  await notifySlack(`${feed.name}: ${written} new in ${feed.targetEntity} (Sento)`);
+  const isMetricFeed = observationsOnly && names.length === 0;
+  const shouldPing = feed.notify ?? !isMetricFeed;
+  if (!shouldPing) return;
+  if (names.length > 0) {
+    const shown = names.slice(0, 3).map((n) => `"${n}"`).join(", ");
+    const more = names.length > 3 ? ` and ${names.length - 3} more` : "";
+    await notifySlack(`New in ${feed.targetEntity}: ${shown}${more} (Sento)`);
+  } else {
+    await notifySlack(`${feed.targetEntity}: ${written} new observation(s) (Sento)`);
+  }
 }
 
 export async function runAllFeeds(
